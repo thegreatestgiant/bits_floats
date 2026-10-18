@@ -4,9 +4,15 @@
 #include <stddef.h>
 
 unsigned bitset_symmetric_difference_count(uint32_t a, uint32_t b) {
-    (void)a;
-    (void)b;
-    return 0;
+    uint32_t c = a^b;
+    uint32_t one = 1;
+    int sum = 0;
+    for(int i = 0; i<32;i++){
+        uint32_t t = c >>i;
+        t = t & one;
+        sum+=t;
+    }
+    return sum;
 }
 
 uint32_t bit_range_mask(unsigned low, unsigned high) {
