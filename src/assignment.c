@@ -101,8 +101,7 @@ int compare_signed_unsigned_math(
 
 uint32_t multiply_by_24(uint32_t x)
 {
-    (void)x;
-    return 0;
+    return (x<<5)-(x<<3);
 }
 
 fp32_info_t fp32_decode(uint32_t bits)
