@@ -101,27 +101,88 @@ int compare_signed_unsigned_math(
 
 uint32_t multiply_by_24(uint32_t x)
 {
-    return (x<<5)-(x<<3);
+    return (x << 5) - (x << 3);
 }
 
 fp32_info_t fp32_decode(uint32_t bits)
 {
-    (void)bits;
-
+    uint32_t eMask = bit_range_mask(23, 30);
+    uint32_t fMask = bit_range_mask(0, 22);
+    uint32_t exp_raw = bits & eMask;
+    exp_raw >>= 23;
+    uint8_t exp = exp_raw;
+    uint32_t fraction = bits & fMask;
+    fp32_kind_t kind;
+    int ub;
+    if (exp == 0)
+    {
+        ub = -126;
+        if (fraction == 0)
+        {
+            kind = FP32_ZERO;
+        }
+        else
+        {
+            kind = FP32_SUBNORMAL;
+        }
+    }
+    else if (exp == 255)
+    {
+        ub = 0;
+        if (fraction == 0)
+        {
+            kind = FP32_INFINITY;
+        }
+        else
+        {
+            kind = FP32_NAN;
+        }
+    }
+    else
+    {
+        ub = exp - 127;
+        kind = FP32_NORMAL;
+    }
     fp32_info_t info = {
-        .negative = false,
-        .kind = FP32_ZERO,
-        .exponent_bits = 0,
-        .fraction_bits = 0,
-        .unbiased_exponent = -126,
+        .negative = bits >> 31,
+        .kind = kind,
+        .exponent_bits = exp,
+        .fraction_bits = fraction,
+        .unbiased_exponent = ub,
     };
     return info;
 }
 
 double fp32_exact_value(uint32_t bits)
 {
-    (void)bits;
-    return 0.0;
+    fp32_info_t info = fp32_decode(bits);
+    if (info.kind == FP32_ZERO)
+    {
+        if (info.negative)
+        {
+            return -0.0;
+        }
+        return 0.0;
+    }
+    if (info.kind == FP32_INFINITY)
+    {
+        if (info.negative)
+        {
+            return -INFINITY;
+        }
+        return INFINITY;
+    }
+    if (info.kind == FP32_NAN)
+    {
+        return NAN;
+    }
+    double M = (double)info.fraction_bits / (double)(1 << 23);
+    short n = info.negative ? -1 : 1;
+    if (info.kind == FP32_NORMAL)
+    {
+        return n * (1 + M) * ldexp(1.0, info.unbiased_exponent);
+    }
+    return n * (0 + M) * ldexp(1.0, info.unbiased_exponent);
 }
 
 uint32_t fp32_next_up_bits(uint32_t bits)
