@@ -61,13 +61,16 @@ bool add_signed_width(
     unsigned width,
     uint32_t *sum_bits)
 {
-    (void)a_bits;
-    (void)b_bits;
-    (void)width;
-
-    if (sum_bits != NULL)
-    {
-        *sum_bits = 0;
+    uint32_t mask = bit_range_mask(0,width-1);
+    a_bits&=mask;
+    b_bits&=mask;
+    short a_sign = a_bits>>(width-1);
+    short b_sign = b_bits>>(width-1);
+    *sum_bits = a_bits+b_bits;
+    *sum_bits &=mask;
+    short ans_sign = *sum_bits>>(width-1);
+    if((a_sign==b_sign)&& (a_sign!=ans_sign)){
+        return true;
     }
     return false;
 }
