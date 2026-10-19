@@ -187,8 +187,22 @@ double fp32_exact_value(uint32_t bits)
 
 uint32_t fp32_next_up_bits(uint32_t bits)
 {
-    (void)bits;
-    return 0;
+    fp32_info_t info = fp32_decode(bits);
+    // double val = fp32_exact_value(bits);
+    if(info.kind == FP32_ZERO){
+        return 1;
+    }
+    if(info.kind == FP32_NAN || (info.kind == FP32_INFINITY && !info.negative)){
+        return bits;
+    }
+    if(info.kind == FP32_INFINITY){
+        return 0xFF7FFFFF;
+    }
+    if(!info.negative){
+        return bits+1;
+    } else {
+        return bits-1;
+    }
 }
 
 bool fp32_truncate_to_int(uint32_t bits, int32_t *out)
